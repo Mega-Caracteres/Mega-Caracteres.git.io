@@ -1,0 +1,51 @@
+
+label {
+	font-family: arial black;
+	margin-top: 20px;
+	color: black;
+	margin-left: 30%;
+	padding: auto;
+	font-size: 15px;
+}
+p{
+	font-family: arial black;
+	margin-top: 20px;
+	color: black;
+	margin: auto;
+	padding: auto;
+	font-size: 30px;
+}
+div input {
+	margin-left: 2%;
+}
+header{
+    background: #557e7c;
+    color: #ebebd3;
+    height: 10%;
+    padding: 10px;
+    position: relative;
+}
+div{
+	width: 50%;
+	height: 300px;
+	margin-left: 20%;
+	background: #557e7c;
+	border-radius: 30px;
+}
+select{
+	margin-left: 2%;
+}
+textarea{
+	margin-left: 30%;
+}
+.elements th{
+	margin-left: 30%;
+
+}
+from button{
+	margin-left: 10%;
+}
+
+button{
+	margin-left: 55%;
+}

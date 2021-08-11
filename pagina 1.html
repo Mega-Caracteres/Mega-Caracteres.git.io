@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Doctos types</title>
+        <script type="text/javascript">
+    
+            var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+
+            var dataBase = null;
+
+             function startDB() {
+//Aqui creamos la base de datos de indexedDB y le damos apertura para poder utilizarla.
+                dataBase = indexedDB.open("object", 1);
+                dataBase.onupgradeneeded = function (e) {
+
+                    active = dataBase.result;
+//Creamos un almacen llamado people ( que podria ser de cualquier nombre), donde agrregamos objetos.
+                     object = active.createObjectStore("people", { keyPath : 'id', autoIncrement : true });
+//Creacion de objetos que almacenariamos en el almacen people.
+                    object.createIndex('by_name', 'Name', { unique : false });
+                    object.createIndex('by_dni', 'Dni', { unique : true });
+                    object.createIndex('by_surname', 'Surname', { unique : false });
+                    object.createIndex('by_sexo', 'Sexo', { unique : false });
+                    object.createIndex('by_osocial', 'O-social', { unique : false });
+                    object.createIndex('by_numsocial', 'Num-social', { unique : true });
+                    object.createIndex('by_telefono', 'Telefono', { unique : false });
+                    object.createIndex('by_direccion', 'Direccion', { unique : false });
+                    object.createIndex('by_history', 'History', { unique : false });
+          
+                };
+// onsuccess es una funcion que da alerta cuando se haya cargado correctamente la base de datos.
+                dataBase.onsuccess = function (e) {
+                    alert('Base de datos cargada correctamente');
+                    loadAll();
+        
+                };
+//onerror es la funcion que da alerta sobre algun error al cargar la base de datos.        
+                dataBase.onerror = function (e)  {
+                    alert('Error cargando la base de datos');
+                };
+             }  
+// como podemos crear varios almacenes en una misma base de datos, tenemos que crear una transaction
+//para poder indicar donde se almacenaran los objetos. 
+              function add() {
+                var active = dataBase.result;
+                var data = active.transaction(["people"], "readwrite");
+                var object = data.objectStore("people");  
+
+// Esta variable es la que creamos donde contiene los  objetos para almacenar en people (almacen de datos).
+
+                var request = object.put({
+                    dni: document.querySelector("#dni").value,
+                    name: document.querySelector("#name").value,
+                    surname: document.querySelector("#surname").value,
+                     sexo: document.querySelector("#sexo").value,
+                     telefono: document.querySelector("#telefono").value,
+                     osocial: document.querySelector("#osocial").value,
+                     numsocial: document.querySelector("#numsocial").value,
+                     direccion: document.querySelector("#direccion").value,
+                    history: document.querySelector("#history").value,
+         
+                });
+
+// Funcion de alerta. Es el mensaje de error si hay algo mal hecho por el usuario.
+
+                 request.onerror = function (e) {
+                    alert(request.error.name + '\n\n' + request.error.message);
+                };
+
+                  data.oncomplete = function (e) {
+                    document.querySelector("#dni").value = '';
+                    document.querySelector("#name").value = '';
+                    document.querySelector("#surname").value = '';
+                    document.querySelector("#sexo").value = '';
+                    document.querySelector("#telefono").value = '';
+                    document.querySelector("#history").value = '';
+                    document.querySelector("#osocial").value = '';
+                    document.querySelector("#numsocial").value = '';
+                     document.querySelector("#direccion").value = '';
+             
+
+                    alert('Objeto agregado correctamente');
+                    loadAll();
+                };
+             }
+
+            function load(id) {
+                var active = dataBase.result;
+                var data = active.transaction(["people"], "readonly");
+                var object = data.objectStore("people");
+
+                var request = object.get(parseInt(id));
+
+                request.onsuccess = function () {
+                    var result = request.result;
+
+                    if (result !== undefined) {
+                        alert("ID: " + result.id + "\n\
+                               DNI " + result.dni + "\n\
+                               Name: " + result.name + "\n\
+                               Surame: " + result.surname + "\n\
+                               Sexo: " + result.sexo + "\n\
+                               Telefono: " + result.telefono + "\n\
+                               Osocial: " + result.osocial + "\n\
+                               Numsocial: " + result.numsocial + "\n\
+                               Direccion: " + result.direccion + "\n\
+                               History: " + result.history);
+            }
+                };
+            }
+            function delet() {
+
+                var active = dataBase.result;
+                var data = active.transaction(["people"],"readwrite");
+                var object = data.objectStore("people");    
+
+    // primero buscamos el registro a partir del dni
+                 var index = object.index("by_dni");
+                var request = index.get(document.querySelector("#dni").value);
+
+    // cuando se encuentre el registro, lo borramos
+                 request.onsuccess = function () {
+                 var result = request.result;
+                   object.delete(result.id);
+                };
+            }
+
+            function loadByDni(dni) {
+                var active = dataBase.result;
+                var data = active.transaction(["people"], "readonly");
+                var object = data.objectStore("people");
+                var index = object.index("by_dni");
+                var request = index.get(String(name));
+
+                request.onsuccess = function () {
+                    var result = request.result;
+
+                    if (result !== undefined) {
+                        alert("ID: " + result.id + "\n\
+                               DNI " + result.dni + "\n\
+                               Name: " + result.name + "\n\
+                               Surame: " + result.surname + "\n\
+                               History: " + result.history);
+            }
+                };
+            }
+             function loadAll() {
+                var active = dataBase.result;
+                var data = active.transaction(["people"], "readonly");
+                var object = data.objectStore("people");
+
+                var elements = [];
+
+                object.openCursor().onsuccess = function (e) {
+
+                    var result = e.target.result;
+
+                    if (result === null) {
+                        return;
+            }
+
+                    elements.push(result.value);
+                    result.continue();
+
+                };
+
+                data.oncomplete = function () {
+
+                    var outerHTML = '';
+
+                    for (var key in elements) {
+
+                        outerHTML += '\n\
+                        <tr>\n\
+                            <td>' + elements[key].dni + '</td>\n\
+                            <td>' + elements[key].name + '</td>\n\
+                            <td>' + elements[key].surname + '</td>\n\
+                            <td>' + elements[key].history + '</td>\n\
+                            <td>\n\
+                        <button type="button" onclick="load(' + elements[key].id + ')">Detalles</button>\n\
+                          </td>\n\
+                        </tr>';
+            } 
+
+                    elements = [];
+                    document.querySelector("#elementsList").innerHTML = outerHTML;
+                };
+
+            }
+             function iniciar(){
+
+                boton=document.getElementById("buscar");
+                boton.addEventListener("click",buscarobjeto, true);
+                var solicitud=indexedDB.open("people");
+    
+                solicitud.onsuccess=function(e){
+                    bd=e.target.result;
+                }
+    
+                solicitud.onupgradeneeded=function(e){
+                    bd=e.target.result;
+                    bd.createObjectStore("people", {keyPath: "id"});
+                }   
+            }
+       
+        </script>
+        <link rel="stylesheet" type="text/css" href="css/estilos1.css">
+        <link rel="stylesheet" type="text/css" href="css/style2.css">
+    </head>
+     <header>
+        <div class="container">
+            <h1 class="logo">Ingresos- <span>Doctos Types</span></h1>
+        </div>
+        <nav id="site-nav" class="site-nav">
+            <ul>
+                <li><a href="index.html"><i class="fa fa-home site-nav--icon"></i>Inicio</a></li>
+                <li><a href="pagina 1.html"><i class="fa fa-info site-nav--icon"></i>Ingresos</a></li>
+                <li><a href="pagina 2.html"><i class="fa fa-pencil-alt site-nav--icon"></i>Profesionales</a></li>
+                <li><a href="pagina 3.html"><i class="fa fa-dollar-sign site-nav--icon"></i>Turnos</a></li>
+                <li><a href="pagina 4.html"><i class="fa fa-envelope site-nav--icon"></i>Contactanos</a></li>
+            </ul>
+        </nav>
+        <div id="menu-toggle" class="menu-toggle" onClick="cambiarClase()">
+            <div class="hamburger"></div>
+        </div>
+    </header>
+    <body onload = "startDB();">
+        <body><br>
+        <div class="input_group"><br>
+         <p>DATOS PERSONALES</p>
+        <label>N° Dni:</label>
+        <input type="text" id="dni" placeholder="Agregar DNI"/><br><br>
+          <label>Nombre:</label>
+          <input type="text" id="name" placeholder="Nombre"><br><br>
+          <label>Apellido:</label>
+          <input type="text" id="surname" placeholder="Apellido"><br><br>
+          <label>Direccion:</label>
+          <input type="text" id="direccion" placeholder="Direccion"><br><br>
+          <label>Telefono:</label>
+          <input type="text" id="telefono" placeholder="Telefono">
+        </div>
+        <br>
+        <div class="group"><br>
+        <p>DATOS ESSENCIALES</p>
+        <label>Obra Social:</label>
+        <select type="text" id="osocial"placeholder="Obra Social"/><br/> 
+        <option>Pami</option>
+        <option>Osep</option>
+        <option>Swiss Medical</option>
+        <option>Ospelsym</option>
+        <option>Sancor salud</option>
+        <option>Osecac</option>
+        </select><br><br>
+        <label>N° de Carnet:</label>
+        <input type="text" id="numsocial" placeholder="N° Obra social"><br><br>
+        <label>Sexo:</label>
+        <select type="text" id="sexo" placeholder="Sexo"><br>
+        <option>Hombre</option>
+        <option>Mujer</option>
+        </select><br><br>
+        <label>Emision de carnet</label>
+        <input type="date" id="emision" placeholder="fecha de emision"><br><br>
+        <label>Vencimiento de carnet</label>
+        <input type="date" id="vecimineto" placeholder="fecha de vecimiento">
+        </div><br>
+        <div class="input"><br>
+        <p>DATOS CLINICOS</p>
+        <textarea type="text" id="history" rows="10" cols="40" placeholder="Historia clinica"></textarea>
+        </div><br>
+        <button type="button" onclick="add();">Guardar</button>
+        <hr>
+        <button type="button" onclick="delet();">Borrar x DNI</button><br>
+        <br>
+     <div id="elements"><br>
+            <table>
+                <p>Pacientes Asociados</p>
+            
+                <tr>DNI</tr>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<tr>Nombre</tr>
+        
+                <tbody id="elementsList">
+                    <tr>
+                        <td colspan="3">No hay elementos que mostrar</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div> 
+</body>
+   
+    </body>
+
+
+</html>
